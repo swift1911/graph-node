@@ -817,7 +817,9 @@ fn satisfies_graphiql_introspection_query_without_fragments() {
     ",
     );
 
-    let data = result.data.expect("Introspection query returned no result");
+    let data = result
+        .take_data()
+        .expect("Introspection query returned no result");
     assert_eq!(data, expected_mock_schema_introspection());
 }
 
@@ -920,7 +922,9 @@ fn satisfies_graphiql_introspection_query_with_fragments() {
     ",
     );
 
-    let data = result.data.expect("Introspection query returned no result");
+    let data = result
+        .take_data()
+        .expect("Introspection query returned no result");
     assert_eq!(data, expected_mock_schema_introspection());
 }
 
@@ -1243,7 +1247,7 @@ fn introspection_possible_types() {
           }
         }",
     )
-    .data
+    .take_data()
     .unwrap();
 
     assert_eq!(

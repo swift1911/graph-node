@@ -42,7 +42,7 @@ impl<S: SubgraphDeploymentStore, Q: GraphQlRunner> LazyMetadata<S, Q> {
             ))
             .await?;
 
-        let deployment = match &value {
+        let deployment = match value.as_ref() {
             q::Value::Object(map) => match &map["subgraphDeployment"] {
                 q::Value::Object(deployment) => deployment,
                 _ => unreachable!(),
@@ -77,7 +77,7 @@ impl<S: SubgraphDeploymentStore, Q: GraphQlRunner> LazyMetadata<S, Q> {
             ))
             .await?;
 
-        let deployment = match &value {
+        let deployment = match value.as_ref() {
             q::Value::Object(map) => match &map["subgraphDeployment"] {
                 q::Value::Object(deployment) => deployment,
                 _ => unreachable!(),

@@ -272,7 +272,7 @@ fn can_query_one_to_one_relationship() {
     );
 
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![
             (
                 "musicians",
@@ -369,7 +369,7 @@ fn can_query_one_to_many_relationships_in_both_directions() {
     );
 
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -489,7 +489,7 @@ fn can_query_many_to_many_relationship() {
     ]);
 
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -545,7 +545,7 @@ fn query_variables_are_used() {
     );
 
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![object_value(vec![(
@@ -580,7 +580,7 @@ fn skip_directive_works_with_query_variables() {
 
     // Assert that only names are returned
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -602,7 +602,7 @@ fn skip_directive_works_with_query_variables() {
 
     // Assert that IDs and names are returned
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -651,7 +651,7 @@ fn include_directive_works_with_query_variables() {
 
     // Assert that IDs and names are returned
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -685,7 +685,7 @@ fn include_directive_works_with_query_variables() {
 
     // Assert that only names are returned
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -880,7 +880,7 @@ fn variable_defaults() {
 
     assert!(result.errors.is_none());
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "bands",
             q::Value::List(vec![
@@ -900,7 +900,7 @@ fn variable_defaults() {
 
     assert!(result.errors.is_none());
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "bands",
             q::Value::List(vec![
@@ -927,7 +927,7 @@ fn skip_is_nullable() {
     let result = execute_query_document_with_variables(query, None);
 
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -956,7 +956,7 @@ fn first_is_nullable() {
     let result = execute_query_document_with_variables(query, None);
 
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -991,7 +991,7 @@ fn nested_variable() {
 
     assert!(result.errors.is_none());
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![object_value(vec![(
@@ -1069,7 +1069,7 @@ fn can_filter_by_relationship_fields() {
         format!("Unexpected errors return for query: {:#?}", result.errors)
     );
     assert_eq!(
-        result.data,
+        result.take_data(),
         Some(object_value(vec![
             (
                 "musicians",
@@ -1177,9 +1177,10 @@ async fn subscription_gets_result_even_without_events() {
     assert_eq!(results.len(), 1);
     let result = &results[0];
     assert!(result.errors.is_none());
-    assert!(result.data.is_some());
+    let data = result.as_ref().clone().take_data();
+    assert!(data.is_some());
     assert_eq!(
-        result.data,
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -1207,7 +1208,7 @@ fn can_use_nested_filter() {
     );
 
     assert_eq!(
-        result.data.unwrap(),
+        result.take_data().unwrap(),
         object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -1274,7 +1275,7 @@ fn check_musicians_at(
                 result.errors,
                 qid
             );
-            assert_eq!(result.data, expected, "failed query: ({})", qid);
+            assert_eq!(result.take_data(), expected, "failed query: ({})", qid);
         }
         (true, Err(msg)) => {
             assert!(
