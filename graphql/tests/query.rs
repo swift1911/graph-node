@@ -240,6 +240,16 @@ fn execute_query_document_with_variables(
     .clone()
 }
 
+/// Extract the data from a `QueryResult`, and panic if it has errors
+macro_rules! extract_data {
+    ($result: expr) => {
+        match $result.to_result() {
+            Err(errors) => panic!(format!("Unexpected errors return for query: {:#?}", errors)),
+            Ok(data) => data,
+        }
+    };
+}
+
 #[test]
 fn can_query_one_to_one_relationship() {
     let result = execute_query_document(
@@ -266,13 +276,8 @@ fn can_query_one_to_one_relationship() {
         .expect("Invalid test query"),
     );
 
-    assert!(
-        result.errors.is_none(),
-        format!("Unexpected errors return for query: {:#?}", result.errors)
-    );
-
     assert_eq!(
-        result.take_data(),
+        extract_data!(result),
         Some(object_value(vec![
             (
                 "musicians",
@@ -363,13 +368,8 @@ fn can_query_one_to_many_relationships_in_both_directions() {
         .expect("Invalid test query"),
     );
 
-    assert!(
-        result.errors.is_none(),
-        format!("Unexpected errors return for query: {:#?}", result.errors)
-    );
-
     assert_eq!(
-        result.take_data(),
+        extract_data!(result),
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -460,10 +460,7 @@ fn can_query_many_to_many_relationship() {
         .expect("Invalid test query"),
     );
 
-    assert!(
-        result.errors.is_none(),
-        format!("Unexpected errors return for query: {:#?}", result.errors)
-    );
+    let data = extract_data!(result);
 
     let the_musicians = object_value(vec![
         ("name", q::Value::String(String::from("The Musicians"))),
@@ -489,7 +486,7 @@ fn can_query_many_to_many_relationship() {
     ]);
 
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -723,7 +720,7 @@ fn query_complexity() {
 
     // This query is exactly at the maximum complexity.
     let result = execute_subgraph_query_with_complexity(query, max_complexity);
-    assert!(result.errors.is_none());
+    let _ = extract_data!(result);
 
     let query = Query::new(
         Arc::new(api_test_schema()),
@@ -752,7 +749,7 @@ fn query_complexity() {
 
     // The extra introspection causes the complexity to go over.
     let result = execute_subgraph_query_with_complexity(query, max_complexity);
-    match result.errors.unwrap()[0] {
+    match result.to_result().unwrap_err()[0] {
         QueryError::ExecutionError(QueryExecutionError::TooComplex(1_010_200, _)) => (),
         _ => panic!("did not catch complexity"),
     };
@@ -853,8 +850,8 @@ fn instant_timeout() {
     );
 
     match execute_subgraph_query_with_deadline(query, Some(Instant::now()))
-        .errors
-        .unwrap()[0]
+        .to_result()
+        .unwrap_err()[0]
     {
         QueryError::ExecutionError(QueryExecutionError::Timeout) => (), // Expected
         _ => panic!("did not time out"),
@@ -878,9 +875,9 @@ fn variable_defaults() {
     let result =
         execute_query_document_with_variables(query.clone(), Some(QueryVariables::default()));
 
-    assert!(result.errors.is_none());
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "bands",
             q::Value::List(vec![
@@ -898,9 +895,9 @@ fn variable_defaults() {
         ))),
     );
 
-    assert!(result.errors.is_none());
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "bands",
             q::Value::List(vec![
@@ -989,9 +986,9 @@ fn nested_variable() {
         ))),
     );
 
-    assert!(result.errors.is_none());
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![object_value(vec![(
@@ -1018,8 +1015,8 @@ fn ambiguous_derived_from_result() {
 
     let result = execute_query_document_with_variables(query, None);
 
-    assert!(result.errors.is_some());
-    match &result.errors.unwrap()[0] {
+    assert!(result.has_errors());
+    match &result.to_result().unwrap_err()[0] {
         QueryError::ExecutionError(QueryExecutionError::AmbiguousDerivedFromResult(
             pos,
             derived_from_field,
@@ -1064,12 +1061,9 @@ fn can_filter_by_relationship_fields() {
         .expect("invalid test query"),
     );
 
-    assert!(
-        result.errors.is_none(),
-        format!("Unexpected errors return for query: {:#?}", result.errors)
-    );
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![
             (
                 "musicians",
@@ -1117,8 +1111,8 @@ fn cannot_filter_by_derved_relationship_fields() {
         .expect("invalid test query"),
     );
 
-    assert!(result.errors.is_some());
-    match &result.errors.unwrap()[0] {
+    assert!(result.has_errors());
+    match &result.to_result().unwrap_err()[0] {
         QueryError::ExecutionError(QueryExecutionError::InvalidArgumentError(_, s, v)) => {
             assert_eq!(s, "where");
             assert_eq!(
@@ -1176,8 +1170,7 @@ async fn subscription_gets_result_even_without_events() {
 
     assert_eq!(results.len(), 1);
     let result = &results[0];
-    assert!(result.errors.is_none());
-    let data = result.as_ref().clone().take_data();
+    let data = extract_data!(result.as_ref().clone());
     assert!(data.is_some());
     assert_eq!(
         data,
@@ -1269,22 +1262,20 @@ fn check_musicians_at(
                 .map(|id| object_value(vec![("id", q::Value::String(String::from(id)))]))
                 .collect();
             let expected = Some(object_value(vec![("musicians", q::Value::List(ids))]));
-            assert!(
-                result.errors.is_none(),
-                "unexpected error: {:?} ({})\n",
-                result.errors,
-                qid
-            );
-            assert_eq!(result.take_data(), expected, "failed query: ({})", qid);
+            let data = match result.to_result() {
+                Err(errors) => panic!("unexpected error: {:?} ({})\n", errors, qid),
+                Ok(data) => data,
+            };
+            assert_eq!(data, expected, "failed query: ({})", qid);
         }
         (true, Err(msg)) => {
-            assert!(
-                result.errors.is_some(),
-                "expected error `{}` but got successful result ({})",
-                msg,
-                qid
-            );
-            let errors = result.errors.unwrap();
+            let errors = match result.to_result() {
+                Err(errors) => errors,
+                Ok(_) => panic!(
+                    "expected error `{}` but got successful result ({})",
+                    msg, qid
+                ),
+            };
             let actual = errors
                 .first()
                 .expect("we expect one error message")
@@ -1300,7 +1291,7 @@ fn check_musicians_at(
         }
         (false, _) => {
             assert!(
-                result.errors.is_some(),
+                result.has_errors(),
                 "JSONB does not support time travel: {}",
                 qid
             );

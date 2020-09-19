@@ -1223,7 +1223,7 @@ fn successfully_runs_introspection_query_against_complex_schema() {
     ",
     );
 
-    assert!(result.errors.is_none(), format!("{:#?}", result.errors));
+    assert!(!result.has_errors(), format!("{:#?}", result));
 }
 
 #[test]
