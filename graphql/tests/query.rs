@@ -540,9 +540,9 @@ fn query_variables_are_used() {
             .into_iter(),
         ))),
     );
-
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![object_value(vec![(
@@ -576,8 +576,9 @@ fn skip_directive_works_with_query_variables() {
     );
 
     // Assert that only names are returned
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -598,8 +599,9 @@ fn skip_directive_works_with_query_variables() {
     );
 
     // Assert that IDs and names are returned
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -647,8 +649,9 @@ fn include_directive_works_with_query_variables() {
     );
 
     // Assert that IDs and names are returned
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -681,8 +684,9 @@ fn include_directive_works_with_query_variables() {
     );
 
     // Assert that only names are returned
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -922,9 +926,9 @@ fn skip_is_nullable() {
     .expect("invalid test query");
 
     let result = execute_query_document_with_variables(query, None);
-
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -951,9 +955,9 @@ fn first_is_nullable() {
     .expect("invalid test query");
 
     let result = execute_query_document_with_variables(query, None);
-
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data(),
+        data,
         Some(object_value(vec![(
             "musicians",
             q::Value::List(vec![
@@ -1199,9 +1203,9 @@ fn can_use_nested_filter() {
         )
         .expect("invalid test query"),
     );
-
+    let data = extract_data!(result);
     assert_eq!(
-        result.take_data().unwrap(),
+        data.unwrap(),
         object_value(vec![(
             "musicians",
             q::Value::List(vec![
