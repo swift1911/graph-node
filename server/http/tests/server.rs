@@ -28,7 +28,7 @@ impl GraphQlRunner for TestGraphQlRunner {
     }
 
     async fn run_query(self: Arc<Self>, query: Query) -> Arc<QueryResult> {
-        Arc::new(QueryResult::from(q::Value::Object(
+        Arc::new(QueryResult::from(
             if query.variables.is_some()
                 && query
                     .variables
@@ -56,7 +56,7 @@ impl GraphQlRunner for TestGraphQlRunner {
                     .into_iter(),
                 )
             },
-        )))
+        ))
     }
 
     fn run_subscription(&self, _subscription: Subscription) -> SubscriptionResultFuture {
