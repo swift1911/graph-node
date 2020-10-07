@@ -1291,6 +1291,18 @@ impl Table {
             schema_name = layout.catalog.schema,
             block_max = BLOCK_NUMBER_MAX)?;
 
+        // Add a BTree index that helps with the `RevertClampQuery` by making
+        // it faster to find entity versions that have been modified
+        write!(
+            out,
+            "create index {table_name}_block_range_closed\n    \
+                     on {schema_name}.{table_name}(coalesce(upper(block_range), {block_max}))\n \
+                     where coalesce(upper(block_range), {block_max}) < {block_max};\n",
+            table_name = self.name,
+            schema_name = layout.catalog.schema,
+            block_max = BLOCK_NUMBER_MAX
+        )?;
+
         // Create indexes. Skip columns whose type is an array of enum,
         // since there is no good way to index them with Postgres 9.6.
         // Once we move to Postgres 11, we can enable that
@@ -1538,6 +1550,9 @@ create table rel.\"thing\" (
 create index brin_thing
     on rel.thing
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index thing_block_range_closed
+    on rel.thing(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_0_0_thing_id
     on rel.\"thing\" using btree(\"id\");
 create index attr_0_1_thing_big_thing
@@ -1560,6 +1575,9 @@ create table rel.\"scalar\" (
 create index brin_scalar
     on rel.scalar
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index scalar_block_range_closed
+    on rel.scalar(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_1_0_scalar_id
     on rel.\"scalar\" using btree(\"id\");
 create index attr_1_1_scalar_bool
@@ -1619,6 +1637,9 @@ type SongStat @entity {
 create index brin_musician
     on rel.musician
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index musician_block_range_closed
+    on rel.musician(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_0_0_musician_id
     on rel.\"musician\" using btree(\"id\");
 create index attr_0_1_musician_name
@@ -1640,6 +1661,9 @@ create table rel.\"band\" (
 create index brin_band
     on rel.band
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index band_block_range_closed
+    on rel.band(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_1_0_band_id
     on rel.\"band\" using btree(\"id\");
 create index attr_1_1_band_name
@@ -1659,6 +1683,9 @@ create table rel.\"song\" (
 create index brin_song
     on rel.song
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index song_block_range_closed
+    on rel.song(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_2_0_song_id
     on rel.\"song\" using btree(\"id\");
 create index attr_2_1_song_title
@@ -1677,6 +1704,9 @@ create table rel.\"song_stat\" (
 create index brin_song_stat
     on rel.song_stat
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index song_stat_block_range_closed
+    on rel.song_stat(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_3_0_song_stat_id
     on rel.\"song_stat\" using btree(\"id\");
 create index attr_3_1_song_stat_played
@@ -1716,6 +1746,9 @@ type Habitat @entity {
 create index brin_animal
     on rel.animal
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index animal_block_range_closed
+    on rel.animal(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_0_0_animal_id
     on rel.\"animal\" using btree(\"id\");
 create index attr_0_1_animal_forest
@@ -1731,6 +1764,9 @@ create table rel.\"forest\" (
 create index brin_forest
     on rel.forest
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index forest_block_range_closed
+    on rel.forest(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_1_0_forest_id
     on rel.\"forest\" using btree(\"id\");
 
@@ -1746,6 +1782,9 @@ create table rel.\"habitat\" (
 create index brin_habitat
     on rel.habitat
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index habitat_block_range_closed
+    on rel.habitat(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_2_0_habitat_id
     on rel.\"habitat\" using btree(\"id\");
 create index attr_2_1_habitat_most_common
@@ -1799,6 +1838,9 @@ type Habitat @entity {
 create index brin_animal
     on rel.animal
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index animal_block_range_closed
+    on rel.animal(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_0_0_animal_id
     on rel.\"animal\" using btree(\"id\");
 create index attr_0_1_animal_name
@@ -1820,6 +1862,9 @@ create table rel.\"forest\" (
 create index brin_forest
     on rel.forest
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index forest_block_range_closed
+    on rel.forest(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_1_0_forest_id
     on rel.\"forest\" using btree(\"id\");
 
@@ -1835,6 +1880,9 @@ create table rel.\"habitat\" (
 create index brin_habitat
     on rel.habitat
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index habitat_block_range_closed
+    on rel.habitat(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_2_0_habitat_id
     on rel.\"habitat\" using btree(\"id\");
 create index attr_2_1_habitat_most_common
@@ -1868,6 +1916,9 @@ create table rel.\"thing\" (
 create index brin_thing
     on rel.thing
  using brin(lower(block_range), coalesce(upper(block_range), 2147483647), vid);
+create index thing_block_range_closed
+    on rel.thing(coalesce(upper(block_range), 2147483647))
+ where coalesce(upper(block_range), 2147483647) < 2147483647;
 create index attr_0_0_thing_id
     on rel.\"thing\" using btree(\"id\");
 create index attr_0_1_thing_orientation
